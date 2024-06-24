@@ -2,7 +2,7 @@
 from typing import Callable,Optional
 from rich.padding import Padding
 from rich import print
-import rich
+from rich.prompt import Confirm
 import os
 
 type function_lists=list[tuple[str,Optional[function_lists|Callable],Optional[object]]]
@@ -117,7 +117,9 @@ class pyTUImenu():
                         return 1
                     #終了する
                     if mode==exit_func_index and not exit_func_index==0:
-                        return
+                        is_end=Confirm.ask(f'アプリケーションをしゅうりょうしますか？')
+                        if is_end:
+                            return
                     #関数が指定されていない場合
                     if function_list[mode][1] is None:
                         print("\n機能が未実装です\n")
@@ -142,6 +144,7 @@ class pyTUImenu():
                                 break
                     else:
                         return
+                #終了する
                 elif mode==str(len(function_list)+1):
                     return
 def printNo(num:int):
