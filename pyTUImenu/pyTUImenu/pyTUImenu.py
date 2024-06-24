@@ -117,7 +117,7 @@ class pyTUImenu():
                         return 1
                     #終了する
                     if mode==exit_func_index and not exit_func_index==0:
-                        is_end=Confirm.ask(f'アプリケーションをしゅうりょうしますか？')
+                        is_end=Confirm.ask(f'アプリケーションを終了しますか？')
                         if is_end:
                             return
                     #関数が指定されていない場合
