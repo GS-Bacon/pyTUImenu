@@ -4,6 +4,7 @@ from rich.padding import Padding
 from rich import print
 import rich
 import os
+
 type function_lists=list[tuple[str,Optional[function_lists|Callable],Optional[object]]]
 
 class pyTUImenu():
@@ -143,3 +144,21 @@ class pyTUImenu():
                         return
                 elif mode==str(len(function_list)+1):
                     return
+def printNo(num:int):
+    print(f'No.{num}')
+if __name__ == '__main__':
+    f_list:function_lists=[
+        ("No.1",printNo,1),
+        ("No.2",printNo,2),
+        ("No.3",printNo,3),
+        ("No.4",printNo,4),
+        ("No.5~8",[
+            ("No.5",printNo,5),
+            ("No.6",printNo,6),
+            ("No.7",printNo,7),
+            ("No.8",printNo,8),
+        ],None)
+    ]
+    menu=pyTUImenu(function_list=f_list)
+    menu.add_headder("test menu")
+    menu.start_menu()
