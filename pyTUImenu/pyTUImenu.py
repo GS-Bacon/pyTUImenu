@@ -2,10 +2,19 @@ import logging
 from typing import Callable,Optional
 from rich.padding import Padding
 from rich import print
+from rich.logging import RichHandler
+
 import os
 from typing import NamedTuple
 
-logging.basicConfig(level=logging.DEBUG, format='%(name)s:%(lineno)s %(funcName)s [%(levelname)s]: %(message)s')
+FORMAT = "%(message)s"
+logging.basicConfig(
+    level="DEBUG",
+    format=FORMAT,
+    datefmt="[%X]",
+    handlers=[RichHandler()]
+    )
+log = logging.getLogger("rich")
 
 class funcs(NamedTuple):
     name:str
@@ -75,7 +84,7 @@ class pyTUImenu():
     def __init_menu(self,ls:funcs_list):
         """オプションに合わせてメニューリストを初期化する
         """
-        logging.info('start init menu')
+        log.debug('start init menu')
         if self.__is_optional_top_func:
             if isinstance(self.__optional_top_func,list):
                 ls.func_list+=self.__optional_top_func
@@ -84,9 +93,9 @@ class pyTUImenu():
         if len(self.__menu_level)>=2:
             if len(self.__menu_level)>=3:
             #一つ前にもどるコマンドを追加する
-                logging.info('func_list>=2')
+                log.debug('func_list>=2')
                 if self.__is_back and not self.__backu_func in ls.func_list:
-                    logging.info('setting back func')
+                    log.debug('setting back func')
                     ls.func_list.append(self.__backu_func)
                     ls.back_index=len(ls.func_list)-1
                 elif self.__backu_func in ls.func_list:
@@ -95,16 +104,16 @@ class pyTUImenu():
             if self.__is_jump_top and not self.__jump_top_func in ls.func_list:
                 ls.func_list.append(self.__jump_top_func)
                 ls.top_index=len(ls.func_list)-1
-                logging.info('add top')
+                log.debug('add top')
             elif self.__jump_top_func in ls.func_list:
                 ls.top_index=ls.func_list.index(self.__jump_top_func)
-                logging.info('add top2')
+                log.debug('add top2')
         elif not self.__exit_func in ls.func_list:
             ls.func_list.append(self.__exit_func)
             ls.exit_index=len(ls.func_list)-1
         elif self.__exit_func in ls.func_list:
             ls.exit_index=ls.func_list.index(self.__exit_func)
-        #logging.info(f'{ls.back_index=}')
+        #log.debug(f'{ls.back_index=}')
     def __MenuLoop(self,ls:funcs_list):
         #self.__init_menu()
         display_list:list=[]
@@ -131,7 +140,7 @@ class pyTUImenu():
                     if isinstance(ls.back_index,int):
                         if mode==ls.back_index and not ls.back_index==0:
                             del self.__menu_level[-1]
-                            logging.info(f'{len(self.__menu_level)=}')
+                            log.debug(f'{len(self.__menu_level)=}')
                             return len(self.__menu_level)
                     #トップに戻る
                     if mode==ls.top_index and not ls.top_index==0:
@@ -146,12 +155,12 @@ class pyTUImenu():
                         continue
                     #関数が指定されていたら実行する
                     elif isinstance(execute,Callable):
-                        logging.info(f'{ls.func_list[mode].name=}')
+                        log.debug(f'{ls.func_list[mode].name=}')
                         if isinstance(ls.func_list[mode].arg,object):
-                            logging.info(ls.func_list[mode].func)
+                            log.debug(ls.func_list[mode].func)
                             if not ls.func_list[mode].func.__name__==pyTUImenu.start_menu.__name__:
                                 print(ls.func_list[mode].name+"を実行します\n")
-                                logging.info('execute function')
+                                log.debug('execute function')
                                 if ls.func_list[mode].arg==None:
                                     ls.func_list[mode].func()
                                 else:
@@ -159,7 +168,7 @@ class pyTUImenu():
                             else:
                                 self.__menu_level.append(ls.func_list[mode].name)
                                 next_level=ls.func_list[mode].func(ls.func_list[mode],self.__menu_level)
-                                logging.info(f'{ls}')
+                                log.debug(f'{ls}')
                                 if not next_level==len(self.__menu_level):
                                     del self.__menu_level[-1]
                                     return len(self.__menu_level)
@@ -185,10 +194,10 @@ class pyTUImenu():
         if isinstance(func.arg,list):
             ls.func_list=func.arg
         if isinstance(level_list,list):
-            logging.info(f'{level_list=}')
+            log.debug(f'{level_list=}')
             self.__menu_level=level_list
         if self.__menu_level==[]:
-            logging.info(f'add {func.name}')
+            log.debug(f'add {func.name}')
             self.__menu_level.append(func.name)
         self.__jump_top_func=funcs(self.__menu_level[0]+'に戻る',None,None)
         self.__init_menu(ls)
