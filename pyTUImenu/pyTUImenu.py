@@ -9,7 +9,7 @@ from typing import NamedTuple
 
 FORMAT = "%(message)s"
 logging.basicConfig(
-    level="DEBUG",
+    level="INFO",
     format=FORMAT,
     datefmt="[%X]",
     handlers=[RichHandler()]
@@ -35,7 +35,8 @@ class pyTUImenu():
         is_add_jump_top:bool=True,
         is_add_back:bool=True,
         top_menu_name='',
-        menu_name='アプリ'
+        menu_name='アプリ',
+        logger=log
         ) -> None:
         """_summary_
 
