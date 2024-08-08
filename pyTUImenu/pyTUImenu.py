@@ -9,7 +9,7 @@ from typing import NamedTuple
 
 FORMAT = "%(message)s"
 logging.basicConfig(
-    level="INFO",
+    level="NOTSET",
     format=FORMAT,
     datefmt="[%X]",
     handlers=[RichHandler()]
