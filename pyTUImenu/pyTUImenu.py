@@ -35,8 +35,7 @@ class pyTUImenu():
         is_add_jump_top:bool=True,
         is_add_back:bool=True,
         top_menu_name='',
-        menu_name='アプリ',
-        logger=log
+        menu_name='アプリ'
         ) -> None:
         """_summary_
 
