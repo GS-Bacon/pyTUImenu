@@ -10,7 +10,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(name)s:%(lineno)s %(funcName)
 class funcs(NamedTuple):
     name:str
     func:Optional[Callable]
-    arg:Optional[object|list]
+    arg:Optional[object|list]=None
 class funcs_list():
     func_list:list=[]
     top_index:int|None=None
