@@ -105,7 +105,7 @@ class pyTUImenu():
         elif self.__exit_func in ls.func_list:
             ls.exit_index=ls.func_list.index(self.__exit_func)
         #logging.info(f'{ls.back_index=}')
-    def __MenuLoop(self,ls):
+    def __MenuLoop(self,ls:funcs_list):
         #self.__init_menu()
         display_list:list=[]
         while True:
@@ -152,8 +152,10 @@ class pyTUImenu():
                             if not ls.func_list[mode].func.__name__==pyTUImenu.start_menu.__name__:
                                 print(ls.func_list[mode].name+"を実行します\n")
                                 logging.info('execute function')
-                                logging.info(ls.func_list[mode].arg)
-                                ls.func_list[mode].func(ls.func_list[mode].arg)
+                                if ls.func_list[mode].arg==None:
+                                    ls.func_list[mode].func()
+                                else:
+                                    ls.func_list[mode].func(ls.func_list[mode].arg)
                             else:
                                 self.__menu_level.append(ls.func_list[mode].name)
                                 next_level=ls.func_list[mode].func(ls.func_list[mode],self.__menu_level)
