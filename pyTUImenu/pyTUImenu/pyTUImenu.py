@@ -1,9 +1,11 @@
-
+import logging
 from typing import Callable,Optional
 from rich.padding import Padding
 from rich import print
 import os
 from typing import NamedTuple
+
+logging.basicConfig(level=logging.DEBUG, format='%(name)s:%(lineno)s %(funcName)s [%(levelname)s]: %(message)s')
 
 class funcs(NamedTuple):
     name:str
@@ -11,9 +13,10 @@ class funcs(NamedTuple):
     arg:Optional[object|list]
 class funcs_list():
     func_list:list=[]
-    top_index:int
-    back_index:int
-    exit_index:int
+    top_index:int|None=None
+    back_index:int|None=None
+    exit_index:int|None=None
+    jump_index:int|None=None
 class pyTUImenu():
     """メニュー表示をする
     """
@@ -22,7 +25,7 @@ class pyTUImenu():
         enable_level_display:bool=True,
         is_add_jump_top:bool=True,
         is_add_back:bool=True,
-        top_menu_name='トップ',
+        top_menu_name='',
         menu_name='アプリ'
         ) -> None:
         """_summary_
@@ -37,14 +40,14 @@ class pyTUImenu():
         """
         self.__list:funcs_list=funcs_list()
         self.__menu_headder:list=[]
-        self.__menu_level:list[str]=[top_menu_name]
+        self.__menu_level:list[str]=[]
         self.__is_level_display=enable_level_display
         self.__is_jump_top=is_add_jump_top
         self.__is_back=is_add_back
         self.__optional_top_func:list[funcs]|funcs
         self.__is_optional_top_func:bool=False
         self.__backu_func=funcs('1つ前に戻る',None,None)
-        self.__jump_top_func=funcs(top_menu_name+'に戻る',None,None)
+        self.__jump_top_func:funcs
         self.__exit_func=(menu_name+'を終了する',None,None)
         self.__end_message=None
 
@@ -69,37 +72,42 @@ class pyTUImenu():
         for l in self.__menu_level:
             a+=str(l)+"=>"
         return Padding(a,1)
-    def __init_menu(self):
+    def __init_menu(self,ls:funcs_list):
         """オプションに合わせてメニューリストを初期化する
         """
+        logging.info('start init menu')
         if self.__is_optional_top_func:
             if isinstance(self.__optional_top_func,list):
-                self.__list.func_list+=self.__optional_top_func
-            else: self.__list.func_list.append(self.__optional_top_func)
+                ls.func_list+=self.__optional_top_func
+            else: ls.func_list.append(self.__optional_top_func)
         #FunctionList+=[('プログラム終了',ControlRRR.AutoRRR.theEnd,False)]
         if len(self.__menu_level)>=2:
+            if len(self.__menu_level)>=3:
             #一つ前にもどるコマンドを追加する
-            if self.__is_back and not self.__backu_func in self.__list.func_list:
-                self.__list.func_list.append(self.__backu_func)
-                self.__list.back_index=len(self.__list.func_list)-1
-            elif self.__backu_func in self.__list.func_list:
-                self.__list.back_index=self.__list.func_list.index(self.__backu_func)
+                logging.info('func_list>=2')
+                if self.__is_back and not self.__backu_func in ls.func_list:
+                    logging.info('setting back func')
+                    ls.func_list.append(self.__backu_func)
+                    ls.back_index=len(ls.func_list)-1
+                elif self.__backu_func in ls.func_list:
+                    ls.back_index=ls.func_list.index(self.__backu_func)
             #トップに戻る
-            if self.__is_jump_top and not self.__jump_top_func in self.__list:
-                self.__list.append(self.__jump_top_func)
-                jump_top_func_index=len(self.__list)-1
-            elif self.__jump_top_func in self.__list:
-                jump_top_func_index=self.__list.index(self.__jump_top_func)
-        elif not self.__exit_func in self.__list:
-            self.__list.append(self.__exit_func)
-            exit_func_index=len(self.__list)-1
-        elif self.__exit_func in self.__list:
-            exit_func_index=self.__list.index(self.__exit_func)
-    def __MenuLoop(self):
+            if self.__is_jump_top and not self.__jump_top_func in ls.func_list:
+                ls.func_list.append(self.__jump_top_func)
+                ls.top_index=len(ls.func_list)-1
+                logging.info('add top')
+            elif self.__jump_top_func in ls.func_list:
+                ls.top_index=ls.func_list.index(self.__jump_top_func)
+                logging.info('add top2')
+        elif not self.__exit_func in ls.func_list:
+            ls.func_list.append(self.__exit_func)
+            ls.exit_index=len(ls.func_list)-1
+        elif self.__exit_func in ls.func_list:
+            ls.exit_index=ls.func_list.index(self.__exit_func)
+        #logging.info(f'{ls.back_index=}')
+    def __MenuLoop(self,ls):
+        #self.__init_menu()
         display_list:list=[]
-        back_func_index=0
-        jump_top_func_index=0
-        exit_func_index=0
         while True:
             display_list.clear()
             if self.__menu_headder!=None:
@@ -108,7 +116,7 @@ class pyTUImenu():
             if self.__is_level_display:
                 display_list.append(self.get_levels())
             display_list.append(Padding("機能を選択してください\n",(0,1),style='b'))
-            for count,doc in enumerate(self.__list,start=1):
+            for count,doc in enumerate(ls.func_list,start=1):
                 display_list.append(Padding('[blue]'+str(count)+'[/blue][white]'+':'+doc[0]+'[/white]',(0,1)))
             for t in display_list:
                 print(t)
@@ -117,57 +125,94 @@ class pyTUImenu():
             if mode.isdigit():
                 mode=int(mode)-1
                 #選択した番号が範囲内であれば
-                if mode<=len(self.__list)-1:
-                    execute=self.__list[mode][1]
+                if mode<=len(ls.func_list)-1:
+                    execute=ls.func_list[mode][1]
                     #1つ前に戻る
-                    if mode==back_func_index and not back_func_index==0:
-                        del self.__menu_level[-1]
-                        return len(self.__menu_level)
+                    if isinstance(ls.back_index,int):
+                        if mode==ls.back_index and not ls.back_index==0:
+                            del self.__menu_level[-1]
+                            logging.info(f'{len(self.__menu_level)=}')
+                            return len(self.__menu_level)
                     #トップに戻る
-                    if mode==jump_top_func_index and not jump_top_func_index==0:
+                    if mode==ls.top_index and not ls.top_index==0:
                         del self.__menu_level[-1]
                         return 1
                     #終了する
-                    if mode==exit_func_index and not exit_func_index==0:
+                    if mode==ls.exit_index and not ls.exit_index==0:
                         return
                     #関数が指定されていない場合
-                    if self.__list[mode][1] is None:
+                    if ls.func_list[mode][1] is None:
                         print("\n機能が未実装です\n")
                         continue
                     #関数が指定されていたら実行する
                     elif isinstance(execute,Callable):
-                        print(self.__list[mode][0]+"を実行します\n")
-                        if len(self.__list[mode])==3:
-                            execute(self.__list[mode][2])
+                        logging.info(f'{ls.func_list[mode].name=}')
+                        if isinstance(ls.func_list[mode].arg,object):
+                            logging.info(ls.func_list[mode].func)
+                            if not ls.func_list[mode].func.__name__==pyTUImenu.start_menu.__name__:
+                                print(ls.func_list[mode].name+"を実行します\n")
+                                logging.info('execute function')
+                                logging.info(ls.func_list[mode].arg)
+                                ls.func_list[mode].func(ls.func_list[mode].arg)
+                            else:
+                                self.__menu_level.append(ls.func_list[mode].name)
+                                next_level=ls.func_list[mode].func(ls.func_list[mode],self.__menu_level)
+                                logging.info(f'{ls}')
+                                if not next_level==len(self.__menu_level):
+                                    del self.__menu_level[-1]
+                                    return len(self.__menu_level)
                         else:
                             execute()
                         if self.__end_message is not None:
                             print(self.__end_message)
                         #return
-                    elif isinstance(self.__list[mode][1],list):
-                        next_list=self.__list[mode][1]
+                    elif isinstance(ls.func_list[mode][1],list):
+                        next_list=ls.func_list[mode][1]
                         if next_list is not None and not isinstance(next_list,Callable):
-                            next_leve=self.__MenuLoop(self.__function_list=next_list,top_menu_name=self.__list[mode][0])
-                            if not next_leve==len(self.__menu_level):
-                                del self.__menu_level[-1]
-                                return len(self.__menu_level)
-                                break
+                            pass
+                            #if not next_leve==len(self.__menu_level):
+                            #    del self.__menu_level[-1]
+                            #    return len(self.__menu_level)
+                            #    break
                     else:
                         return
-                elif mode==str(len(self.__list)+1):
+                elif mode==str(len(ls.func_list)+1):
                     return
-    def start_menu(self,funcs:funcs):
-        if isinstance(funcs.arg,list):
-            self.__list=funcs.arg
-        self.__init_menu()
-        self.__MenuLoop(self.__list,False)
+    def start_menu(self,func:funcs,level_list:list[str]|None=None):
+        ls=funcs_list()
+        if isinstance(func.arg,list):
+            ls.func_list=func.arg
+        if isinstance(level_list,list):
+            logging.info(f'{level_list=}')
+            self.__menu_level=level_list
+        if self.__menu_level==[]:
+            logging.info(f'add {func.name}')
+            self.__menu_level.append(func.name)
+        self.__jump_top_func=funcs(self.__menu_level[0]+'に戻る',None,None)
+        self.__init_menu(ls)
+        next_level=self.__MenuLoop(ls)
 
+        self.__init_menu(ls)
+        return next_level
+class a():
+    def pppp(self,text:str='nothing'):
+        print(text)
 if __name__=="__main__":
-    f1=funcs('print1',print,'print1')
-    f2=funcs('print1',print,'print1')
-    f3=funcs('print1',print,'print1')
-    f4=funcs('print1',print,'print1')
-    f5=funcs('print1',print,'print1')
-    top=funcs('top',pyTUImenu().start_menu,[f1,f2,f3,f4,f5])
+    
+    f1=funcs('print1_1',a().pppp,'print1_1')
+    f2=funcs('print1_2',print,'print1_2')
+    f3=funcs('print1_3',print,'print1_3')
+    f4=funcs('print1_4',print,'print1_4')
+    f2_1=funcs('print2_1',print,'print2_1')
+    f2_2=funcs('print2_2',print,'print2_2')
+    f2_3=funcs('print2_3',print,'print2_3')
+    f3_1=funcs('print3_1',print,'print3_1')
+    f3_2=funcs('print3_2',print,'print3_2')
+    f3_3=funcs('print3_3',print,'print3_3')
     pyui=pyTUImenu()
+    headder=Padding("[green]"+os.getlogin()+"でログインしています[/green]",(0,1))
+    pyui.add_headder(headder=headder)
+    three=funcs('therd',pyui.start_menu,[f3_1,f3_2,f3_3])
+    tow=funcs('next',pyui.start_menu,[f2_1,f2_2,f2_3,three])
+    top=funcs('top',pyui.start_menu,[f1,f2,f3,f4,tow])
     pyui.start_menu(top)
